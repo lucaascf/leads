@@ -205,13 +205,10 @@ for chunk in pd.read_csv(
     sep=";",
     encoding="latin1",
     header=None,
-    engine="c",
+    engine="python",
     on_bad_lines="skip",
     chunksize=1_000_000,
     usecols=IDX_USADAS,
-    dtype=str,
-    na_values=["", "nan", "NaN"],
-    keep_default_na=True,
 ):
     chunk_num += 1
 
@@ -282,7 +279,11 @@ dados_empresas = {}
 def mapear_porte_seguro(porte_codigo):
     if pd.isna(porte_codigo):
         return "NÃO INFORMADO"
-    porte_str = str(porte_codigo).strip().zfill(2)
+    try:
+        # int(float(...)) cobre tanto int (1) quanto float (1.0) lidos pelo pandas
+        porte_str = str(int(float(porte_codigo))).zfill(2)
+    except:
+        return "NÃO INFORMADO"
     return {
         "01": "MICRO EMPRESA",
         "03": "EMPRESA DE PEQUENO PORTE",
@@ -296,9 +297,9 @@ for chunk_emp in pd.read_csv(
     sep=";",
     encoding="latin1",
     header=None,
-    engine="python",
+    engine="c",
     on_bad_lines="skip",
-    chunksize=500_000,
+    chunksize=1_000_000,
     usecols=[0, 4, 5]  # CNPJ_BASICO, CAPITAL, PORTE
 ):
     if len(chunk_emp) == 0:
